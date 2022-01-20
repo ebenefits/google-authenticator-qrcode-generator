@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Your 2FA QR code generator</title>
+
+    <meta charset="utf-8">
+    <meta name="description" content="2FA QR code generator">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'none'; script-src 'unsafe-inline' https://code.jquery.com https://cdn.jsdelivr.net; style-src 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src data:">
+
+    <link rel="icon">
+    <link rel="license" href="https://www.gnu.org/licenses/gpl-3.0.html" title="GNU GPL 3.0 or later">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css" integrity="sha384-zCbKRCUGaJDkqS1kPbPd7TveP5iyJE0EjAuZQTgFLD2ylzuqKfdKlfG/eSrtxUkn"
+          crossorigin="anonymous">
+
+    <script src="https://cdn.jsdelivr.net/gh/emn178/hi-base32@v0.5.1/build/base32.min.js" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js" integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/gh/lrsjng/jquery-qrcode@v0.18.0/dist/jquery-qrcode.min.js" integrity="sha384-W+CodFEp2EiGOM49HsUJwCpf58Vkgsx5CtgCl6bQJiAfGb+ndvp/fE8dZtI9fnUD"
+            crossorigin="anonymous"></script>
+    <style>
+        body {
+            margin-bottom: 100px;
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                max-width: 770px;
+            }
+        }
+
+        header {
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 4em;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+<header class="mt-4">
+    <h1 itemprop="name">Your 2FA QR code</h1>
+</header>
+
+<div id="container" class="container">
+    <hr>
+    <div class="p-4 text-center" id="qr"></div>
+    <hr>
+    <p>Scan this QR Code in your google authenticator app and receive your 2FA codes in the google authenticator app.</p>
+    <hr>
+</div>
+
+<script>
+    const $qr = $("#qr");
+    // Set favicon
+    $qr.empty().qrcode({
+        render: "image",
+        text: "123",
+        size: 30
+    });
+    document.querySelector("link[rel=icon]").href = $("#qr img").prop("src");
+
+    function getParameterFromUrl(parameterName) {
+        const regex = new RegExp('\\?((.*)&)?' + parameterName + '=([^&\\n]*)&?(.*)', 'gi');
+        return regex.exec(window.location.search)[3];
+    }
+
+    const secret = decodeURIComponent(getParameterFromUrl('secret'));
+    const account = decodeURIComponent(getParameterFromUrl('account'));
+    const issuer = decodeURIComponent(getParameterFromUrl('issuer'));
+
+    const base32Secret = base32.encode(secret);
+    console.log('base32', base32Secret);
+
+    function generate_uri() {
+        let s = `otpauth://totp/${encodeURIComponent(account)}?secret=${encodeURIComponent(base32Secret.replace(/ /g, ''))}`;
+        if (issuer.value !== "") {
+            s += `&issuer=${encodeURIComponent(issuer)}`;
+        }
+        console.log('uri used: ' + s);
+        return s;
+    }
+
+    $qr.empty().qrcode({
+        text: generate_uri(),
+        ecLevel: 'L',
+        size: 200,
+    });
+</script>
+</body>
+</html>
